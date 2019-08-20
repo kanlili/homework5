@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+
+<head>
+    <link href="./ext-3.3.0/resources/css/ext-all.css" rel="stylesheet" type="text/css" />
+    <script src="./ext-3.3.0/adapter/ext/ext-base.js" type="text/javascript"></script>
+    <script src="./ext-3.3.0/ext-all.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        Ext.onReady(function () {
+         var sm=new Ext.grid.CheckboxSelectionModel();
+         var cm=new Ext.grid.ColumnModel([
+             new Ext.grid.RowNumberer(),
+             {
+                 header:'id',
+                 dataIndex:'id',
+                 sortable:true,
+                 editor:new Ext.grid.GridEditor(
+                     new Ext.form.TextField({
+                       allowBlank:false
+                     })
+                 )
+             },
+             {
+                 header:'name',
+                 dataIndex:'name',
+                 sortable:true,
+                 editor:new Ext.grid.GridEditor(
+                     new Ext.form.TextField({
+                       allowBlank:false
+                     })
+                 )
+             },
+             {
+                 header:'class',
+                 dataIndex:'class',
+                 sortable:true,
+                 editor:new Ext.grid.GridEditor(
+                 new Ext.form.TextField({
+                       allowBlank:false
+                     })
+                 )
+            },
+             {
+                 header:'sex',
+                 dataIndex:'sex',
+                 editor:new Ext.grid.GridEditor(
+                     new Ext.form.TextField({
+                       allowBlank:false
+                     })
+                 )
+             },
+             {
+                 header:'age',
+                 dataIndex:'age',
+                 editor:new Ext.grid.GridEditor(
+                     new Ext.form.TextField({
+                       allowBlank:false
+                     })
+                 )
+             },
+             {
+                 header:'birthday',
+                 dataIndex:'birthday',
+                 editor:new Ext.grid.GridEditor(new Ext.form.DateField({
+            format: 'Y-m-d',
+            minValue: '1995-12-14',
+           // disabledDays: [0, 6],
+           // disabledDaysText: '只能选择工作日'
+        })),
+        renderer: function(value) {
+            return value.format("Y-m-d");
+        }
+            },
+             {
+                 header:'avatar',
+                 dataIndex:'avatar',
+                 renderer:function(av){
+                 return (av=='male')? '<img src="male.jpg" width="20%"/>':'<img src="fema.jpg" width="20%"/>'
+                 }
+            },
+         ]);
+         var comboData=[
+             ['0','选择1'],
+             ['1','选择2']
+         ];
+         var data=[
+            ['1','kana','class1','male','18',new Date('2000-1-1'),'male'],
+            ['2','kanb','class2','female','19',new Date('1995-1-1'),'female'],
+            ['3','kanc','class1','male','20',new Date('1996-1-1'),'male'],
+            ['4','kand','class2','female','21',new Date('1997-1-1'),'female'],
+            ['5','kane','class2','male','22',new Date('1998-1-1'),'male'],
+         ];
+         var store=new Ext.data.GroupingStore({
+             proxy:new Ext.data.MemoryProxy(data),
+             reader:new Ext.data.ArrayReader({},[
+                 {name:'id'},
+                 {name:'name'},
+                 {name:'class'},
+                 {name:'sex'},
+                 {name:'age'},
+                 {name:'birthday'},
+                 {name:'avatar'},
+             ]),
+             groupField:'class',
+             sortInfo:{
+                 field:'id',direction:'ASC'
+             }
+         });
+      
+         var grid=new Ext.grid.EditorGridPanel({
+             renderTo:'test',
+             id:'editP',
+             height:400,
+             store:store,
+             cm:cm,
+             sm:sm,
+             autoHeight:true,
+             view:new Ext.grid.GroupingView(),
+             bbar:new Ext.PagingToolbar({
+                pageSize:4,
+                store:store,
+                displayInfo:true,
+                displayMsg:'显示第{0}条到{1}条记录，一共{2}条',
+                emptyMsg:"没有记录"
+             }),
+             tbar:new Ext.Toolbar(['-',{
+                 text:'添加',
+                 handler:function(){
+                     var record1=new Ext.data.Record({
+                         name:'',
+                         class:'',
+                         sex:'',
+                         age:'',
+                         birthday:'',
+                         avatar:''
+                     });
+                     grid.stopEditing();
+                     var rowselect=grid.getSelectionModel().last;
+                     if(rowselect===false){
+                        store.insert(0,record1);
+                     }else{
+                        store.insert(rowselect,record1);
+                     }
+                     store.insert(0,record1);
+                     grid.startEditing(0,0);
+                 }
+                 },'-',{
+                    text:'删除',
+                 handler:function(){
+                    let selections=grid.getSelectionModel().getSelected();
+                    if(selections){
+                     Ext.Msg.confirm('Msg','确定要删除？',function(btn){
+                         if(btn=='yes'){
+                             store.remove(selections);
+                             grid.getView().refresh();    
+                         }
+                     })
+                  }
+                 }
+                 }])
+         });
+         var contextmenu=new Ext.menu.Menu({
+            id:'tcontextMenu',
+            items:[{
+                text:'Up',
+                handler:function(){
+                let selections=grid.getSelectionModel().getSelected();
+                var index=store.indexOf(selections);
+                console.log(index);
+                 if(index>0){
+                    store.insert(index-1,selections);
+                    grid.getView().refresh();
+                 }else{
+                    Ext.Msg.alert('Tip','已经是第一行了，请重新选择！')
+                 }
+                
+                }
+            },{
+                text:'Down',
+                handler:function(){
+                let selections=grid.getSelectionModel().getSelected();
+                let index=store.indexOf(selections);
+                console.log(index);
+                 if(index<4){
+                    store.insert(index+1,selections);
+                    grid.getView().refresh();
+                 }else{
+                    Ext.Msg.alert('Tip','已经是最后一行了，请重新选择！')
+                 }
+                
+                }
+            },{
+                text:'First',
+                handler:function(){
+                let selections=grid.getSelectionModel().getSelected();
+                store.insert(0,selections);
+                grid.getView().refresh();                
+                }
+            },{
+                text:'Last',
+                handler:function(){
+                let selections=grid.getSelectionModel().getSelected();
+                store.insert(4,selections);
+                grid.getView().refresh();                
+                }
+            }]
+         });
+        grid.on("rowcontextmenu", function(grid, rowIndex, e){
+        e.preventDefault();
+        grid.getSelectionModel().selectRow(rowIndex);
+        contextmenu.showAt(e.getXY());
+    });	
+         store.load({params:{start:0,limit:4}});
+})          
+    </script>
+</head>
+
+<body>
+    <div id='test'></div>
+</body>
+
+</html>
